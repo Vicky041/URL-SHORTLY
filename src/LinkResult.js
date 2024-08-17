@@ -1,61 +1,72 @@
-import axios from "axios"
-import { useEffect, useState } from "react"
-import { CopyToClipboard } from "react-copy-to-clipboard"
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { CopyToClipboard } from "react-copy-to-clipboard";
 
 const LinkResult = ({ inputValue }) => {
     console.log(inputValue);
-    const [ShortenedLink, setShortenedLink] = useState("")
-    const [copied, setCopied] = useState(false)
+    const [shortenedLink, setShortenedLink] = useState("");
+    const [copied, setCopied] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
     
     const fetchData = async () => {
-      try {
-          setLoading(true);
-          const res = await axios(`https://ulvis.net/API/write/get?url=${inputValue}`);
-          setShortenedLink(res.data.result.full_short_link);
-      } catch(err) {
-          setError(err);
-      } finally {
-          setLoading(false);
-      }
+        try {
+            setLoading(true);
+            const res = await axios.post(
+                'https://api.tinyurl.com/create',
+                { url: inputValue }, 
+                {
+                    headers: {
+                        Authorization: 'Bearer Kpvc2ZPDQTgf7u4fl0Oxeit2FcjmDoPuaaHHWGgEmNP4fSFFcH1LplxMV6QN', 
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            setShortenedLink(res.data.data.tiny_url);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     }
+
     useEffect(() => {
-        if(inputValue.length) {
+        if (inputValue.length) {
             fetchData();
         }
-    }, [inputValue])
+    }, [inputValue]);
 
-    useEffect(()=> {
-        const timer = setTimeout(()=>{
+    useEffect(() => {
+        const timer = setTimeout(() => {
             setCopied(false);
         }, 1000);
         return () => clearTimeout(timer);
     }, [copied]);
 
-    if(loading) {
-        return <p className="noData">Loading...</p>
+    if (loading) {
+        return <p className="noData">Loading...</p>;
     }
-    if(error) {
-      return <p className="noData">Something went wrong!</p>
-  }
+    if (error) {
+        return <p className="noData">Something went wrong: {error}</p>;
+    }
 
-  return (
-    <>
-    {ShortenedLink && (
-        <div className="result">
-        <p>{ShortenedLink}</p>
-        <CopyToClipboard text={ShortenedLink}
-        onCopy={() => setCopied(true)}
-        >
-        <button className={copied ? "copied" : ""}>Copy to clipboard</button>
-        </CopyToClipboard>
-        
-    </div>
-    )}
-    </>
-    
-  )
+    return (
+        <>
+            {shortenedLink && (
+                <div className="result">
+                    <p>{shortenedLink}</p>
+                    <CopyToClipboard 
+                        text={shortenedLink}
+                        onCopy={() => setCopied(true)}
+                    >
+                        <button className={copied ? "copied" : ""}>
+                            Copy to clipboard
+                        </button>
+                    </CopyToClipboard>
+                </div>
+            )}
+        </>
+    );
 }
 
-export default LinkResult
+export default LinkResult;
